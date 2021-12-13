@@ -47,23 +47,9 @@ var foodsize = 15;
 var jedzonkospawntime = 9000;
 var jedzonkospawncount = 50;
 
-var worker = [];
-var workerdata = [];
-var workerisdata = [];
-var enterloop = true;
-for(let i = 0; i<10; i++){
-  worker[i] = new Worker('includes/worker.js');
-  worker[i].addEventListener('message', receiveMessage);
-  workerisdata[i] = true;
-  workerdata[i] = 0;
-  worker[i].id = i;
-}
+var serverdata = 0;
 
-function receiveMessage(e) {
-  id = e.data.id;
-  workerisdata[id] = true;
-  workerdata[id] = e.data;
-}
+var xmlHttp = new XMLHttpRequest();
 
 function randomfromrange(min, max){
   min = Math.ceil(min);
@@ -87,121 +73,74 @@ function renderstats(){
     showavg('energy');
     showavg('metabolism');
     showfps();
-    getworkerinfo(); 
   }, 50);  
 }
 
 function renderframe(){  
-  for(let i=0;i<10;i++){
-    if(workerisdata[i] == false){
-      enterloop = false;
-    }
-  }
-  if(enterloop = true){
-    if(!first){
-      mrowka = [];
-    } else {
-      first = false;
-    }
-    enterloop = false;
-    for(let i=0;i<10;i++){
-      if(workerdata[i].mrowka){
-        mrowka = mrowka.concat(workerdata[i].mrowka);
-      }
-      if(workerdata[i].jedzonko){
-        temp = workerdata[i].jedzonko;
-        jedzonko.forEach((jedzoneczko) => {
-          if(!temp.find(je => je.id == jedzoneczko.id)){
-            jedzonko = jedzonko.filter(j => j.id != jedzoneczko.id);
-          }
-        });
-      }
-      workerisdata[i] = false;
-    }
-    canvas2d.clearRect(0, 0, canvas.width, canvas.height);
-    if(clickmode == "spawnfood" && spawningfood == true){
-      for(let i=0;i<30;i++){
-        let randx = mousex+randomfromrange(0, 10)-randomfromrange(0, 10);
-        if(randx<1){
-          randx = 1;
-        }
-        if(randx>canvaswidth-1){
-          randx = canvaswidth-1;
-        }
-        let randy = mousey+randomfromrange(0, 10)-randomfromrange(0, 10);
-        if(randy<1){
-          randy = 1;
-        }
-        if(randy>canvasheight-1){
-          randy = canvasheight-1;
-        }
-        let temp = new Jedzonko(jedzonkocount, randx, randy);
-        makefood(temp.x, temp.y, temp.size, temp.color);
-        jedzonko.push(temp);
-        jedzonkocount += 1;
-      }
-    }
-    
-    
-    
-    
-    jedzonko.forEach(jedzoneczko => makefood(jedzoneczko.x, jedzoneczko.y, jedzoneczko.size, jedzoneczko.color));
-    mrowka.forEach(mroweczka => mroweczka.frame = makemrowka(mroweczka.frame, mroweczka.x, mroweczka.y, mroweczka.size, mroweczka.halfsize, mroweczka.direction));
-    
-    mrowka.forEach(mroweczka => {
-      if(mroweczka.makesimilar){
-        makesimilar(mroweczka.size, mroweczka.sight, mroweczka.step, mroweczka.metabolism);
-        mroweczka.makesimilar = 0;
-      }
-    });
-    
-    
-    if(frame >= jedzonkospawntime/60){
-      jedzonkospawntime+=1000;
-      for(let i=0;i<jedzonkospawncount;i++){
-        let temp = new Jedzonko(jedzonkocount);
-        makefood(temp.x, temp.y, temp.size, temp.color);
-        jedzonko.push(temp);
-        jedzonkocount += 1;
-      }
-      frame = 0;
-    } else {
-      frame++;
-    }
 
-    frametime[frameavg] = window.performance.now() - framestart;
-    framestart = window.performance.now();
-    frameavg++;
-    if(frameavg == 4){
-      frameavg = 0;
-    }
-    
-    let mrowkalength = mrowka.length;
-    let beginmrowka = 0;
-    let endmrowka = 0;
-    let wycietemrowka = 0;
-    let j = 10;
-    
-    for(let i=0;i<10;i++){
-      endmrowka += Math.ceil(mrowkalength/j);
-      j--;
-      beginmrowka = beginmrowka + wycietemrowka;
-      wycietemrowka = endmrowka - beginmrowka;
-      mrowkalength -= wycietemrowka;
-      mrowkatosend = mrowka.slice(beginmrowka, endmrowka);
-      id = worker[i].id;
-      
-      worker[i].postMessage({mrowkatosend, jedzonko, following, turnrandomly, randomturnangle, canvaswidth, canvasheight, id});
+  canvas2d.clearRect(0, 0, canvas.width, canvas.height);
+  if(clickmode == "spawnfood" && spawningfood == true){
+    for(let i=0;i<30;i++){
+      let randx = mousex+randomfromrange(0, 10)-randomfromrange(0, 10);
+      if(randx<1){
+        randx = 1;
+      }
+      if(randx>canvaswidth-1){
+        randx = canvaswidth-1;
+      }
+      let randy = mousey+randomfromrange(0, 10)-randomfromrange(0, 10);
+      if(randy<1){
+        randy = 1;
+      }
+      if(randy>canvasheight-1){
+        randy = canvasheight-1;
+      }
+      let temp = new Jedzonko(jedzonkocount, randx, randy);
+      makefood(temp.x, temp.y, temp.size, temp.color);
+      jedzonko.push(temp);
+      jedzonkocount += 1;
     }
   }
-}
 
-function getworkerinfo(){
-  let span = document.getElementById("workerout");
-  while(span.firstChild){
-    span.removeChild(span.firstChild);
+  jedzonko.forEach(jedzoneczko => makefood(jedzoneczko.x, jedzoneczko.y, jedzoneczko.size, jedzoneczko.color));
+  mrowka.forEach(mroweczka => mroweczka.frame = makemrowka(mroweczka.frame, mroweczka.x, mroweczka.y, mroweczka.size, mroweczka.halfsize, mroweczka.direction));
+
+  mrowka.forEach(mroweczka => {
+    if(mroweczka.makesimilar){
+      makesimilar(mroweczka.size, mroweczka.sight, mroweczka.step, mroweczka.metabolism);
+      mroweczka.makesimilar = 0;
+    }
+  });
+
+
+  if(frame >= jedzonkospawntime/60){
+    jedzonkospawntime+=1000;
+    for(let i=0;i<jedzonkospawncount;i++){
+      let temp = new Jedzonko(jedzonkocount);
+      makefood(temp.x, temp.y, temp.size, temp.color);
+      jedzonko.push(temp);
+      jedzonkocount += 1;
+    }
+    frame = 0;
+  } else {
+    frame++;
   }
-  span.appendChild(document.createTextNode(workerdata[0]));
+
+  frametime[frameavg] = window.performance.now() - framestart;
+  framestart = window.performance.now();
+  frameavg++;
+  if(frameavg == 4){
+    frameavg = 0;
+  }
+
+  let datatosend = {mrowka, jedzonko, following, turnrandomly, randomturnangle, canvaswidth, canvasheight};
+  
+  xmlHttp.open( "POST", 'http://localhost:8000', false);
+  xmlHttp.send(JSON.stringify(datatosend));
+  
+  let requesteddata = JSON.parse(xmlHttp.responseText);
+  mrowka = requesteddata.mrowka;
+  jedzonko = requesteddata.jedzonko;
 }
 
 function showfps(){
