@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Super symulacja</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="themes/main.css">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <header>
+      <div class="sidebar">
+        <div class="logo">Super simulejszyn</div>
+        <nav>
+          <ul>
+            <li><p class="button">FPS: <span id="fps"></span></p></li>
+            <li><button class="button" onclick="startall()">Start all</button></li>
+            <li><button class="button" onclick="stopall()">Stop all</button></li>
+            <li><button class="button" onclick="makemrowkaobj()">Spawn 1 ant</button></li>
+            <li><input type="number" placeholder="number of steps to move" id="stepsnumber" name="steps" min="1"></li>
+            <li><button class="button" onclick="movestepbystep();">Move</button></li>
+            <li><p class="button">Mrówek jest: <span id="mrowkacount"></span></p></li>
+            <li><p class="button">Średni step: <span id="step"></span></p></li>
+            <li><p class="button">Średni size: <span id="size"></span></p></li>
+            <li><p class="button">Średni sight: <span id="sight"></span></p></li>
+            <li><p class="button">Średni energy: <span id="energy"></span></p></li>
+            <li><p class="button">Średni metabolism: <span id="metabolism"></span></p></li>
+            <li><p class="button">Output workera: <span id="workerout"></span></p></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <div class="main" id="main">
+      <canvas id="symulacja"></canvas>
+    </div>
+    <footer>
+    </footer>
+    <script type="text/javascript" src="includes/main.js"></script>
+  </body>
+</html>
