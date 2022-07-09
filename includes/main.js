@@ -77,7 +77,8 @@ function renderstats(){
 }
 
 function renderframe(){  
-
+  let wholeframetime = window.performance.now();
+  
   canvas2d.clearRect(0, 0, canvas.width, canvas.height);
   if(clickmode == "spawnfood" && spawningfood == true){
     for(let i=0;i<30;i++){
@@ -95,10 +96,21 @@ function renderframe(){
       if(randy>canvasheight-1){
         randy = canvasheight-1;
       }
+      
+      
       let temp = new Jedzonko(jedzonkocount, randx, randy);
       makefood(temp.x, temp.y, temp.size, temp.color);
-      jedzonko.push(temp);
-      jedzonkocount += 1;
+      
+      for(let k=0;k<8;k++){
+        for(let g=0;g<6;g++){
+          if(temp.x >= chunk[k][g].x && temp.x <= chunk[k][g].xend){
+            chunk[k][g].contents.push(temp);
+            jedzonko.push(temp);
+          }
+        }
+      }
+      
+      jedzonkocount++;
     }
   }
 
@@ -118,8 +130,18 @@ function renderframe(){
     for(let i=0;i<jedzonkospawncount;i++){
       let temp = new Jedzonko(jedzonkocount);
       makefood(temp.x, temp.y, temp.size, temp.color);
-      jedzonko.push(temp);
-      jedzonkocount += 1;
+      
+      for(let k=0;k<8;k++){
+        for(let g=0;g<6;g++){
+          if(temp.x >= chunk[k][g].x && temp.x <= chunk[k][g].xend){
+            chunk[k][g].contents.push(temp);
+            jedzonko.push(temp);
+          }
+        }
+      }
+      
+      jedzonkocount++;
+      
     }
     frame = 0;
   } else {
@@ -133,14 +155,17 @@ function renderframe(){
     frameavg = 0;
   }
 
-  let datatosend = {mrowka, jedzonko, following, turnrandomly, randomturnangle, canvaswidth, canvasheight};
-  
+  let datatosend = {mrowka, jedzonko, chunk, following, turnrandomly, randomturnangle, canvaswidth, canvasheight};
+  let requesttime = window.performance.now();
   xmlHttp.open( "POST", 'http://localhost:8000', false);
   xmlHttp.send(JSON.stringify(datatosend));
-  
   let requesteddata = JSON.parse(xmlHttp.responseText);
   mrowka = requesteddata.mrowka;
   jedzonko = requesteddata.jedzonko;
+  chunk = requesteddata.chunk;
+  let endtime = window.performance.now();
+  console.log("frametime: "+(endtime-wholeframetime));
+  console.log("requestime: "+(endtime-requesttime));
 }
 
 function showfps(){
@@ -315,7 +340,43 @@ class Mrowka{
   }
 }
 
+class Chunk{
+  constructor(id, numx, numy, startx, starty, xend, yend){
+    this.id = id;
+    this.x = startx;
+    this.y = starty;
+    this.xend = xend;
+    this.yend = yend;
+    this.numx = numx;
+    this.numy = numy;
+    this.contents = [];
+  }
+}
 
+
+var chunkxsize = parseInt(canvaswidth, 10)/8;
+var chunkysize = parseInt(canvasheight, 10)/6;
+var chunk = [];
+var chunknumber = 0;
+var i = 0, j = 0, x, y;
+for(i=0;i<8;i++){
+  let temp = [];
+  for(j=0;j<6;j++){
+    if(i){
+      x = i*chunkxsize+1;
+    } else {
+      x = 0;
+    }
+    if(j){
+      y = j*chunkysize+1;
+    } else {
+      y = 0;
+    }
+    temp[j] = new Chunk(chunknumber, i, j, x, y, i*chunkxsize+chunkxsize, j*chunkysize+chunkysize);
+    chunknumber++;
+  }
+  chunk[i] = temp;
+}
 
 var mrowka = [];
 var mrowkacount;
@@ -331,7 +392,14 @@ var jedzonkocount;
 for(jedzonkocount=0; jedzonkocount < liczbajedzonek; jedzonkocount++){
   let temp = new Jedzonko(jedzonkocount);
   makefood(temp.x, temp.y, temp.size, temp.color);
-  jedzonko.push(temp); 
+  for(i=0;i<8;i++){
+    for(j=0;j<6;j++){
+      if(temp.x >= chunk[i][j].x && temp.x <= chunk[i][j].xend){
+        chunk[i][j].contents.push(temp);
+        jedzonko.push(temp);
+      }
+    }
+  }
 }
 
 canvas2d.clearRect(0, 0, canvas.width, canvas.height);
